@@ -1,0 +1,171 @@
+CREATE DATABASE BTTH;
+USE BTTH;
+
+CREATE TABLE KHACHHANG(
+	MaKH varchar(20),
+	TenKH varchar(50),
+	DiaChi varchar (20),
+	DienThoai varchar(10),
+	Email varchar(50),
+	LoaiKH varchar(10),
+	
+	primary key(MaKH)
+);
+
+CREATE TABLE HOADON (
+	MaHD varchar(20),
+	NgayLapHD date,
+	
+	primary key(maHD),
+	MaKH varchar(20)
+);
+
+CREATE TABLE CHITIETHD(
+	MaHD varchar (20),
+	MaH varchar (20),
+	SoLuong int (20),
+	
+	PRIMARY KEY (MaHD,MaH)
+);
+
+CREATE TABLE HANGHOA(
+	MaH varchar(20),
+	TenH varchar(255),
+	DonViTinh varchar(10),
+	DonGia int (50),
+	
+	PRIMARY KEY (MaH)
+);
+
+ALTER TABLE HOADON ADD CONSTRAINT FK_MaKH_HOADON FOREIGN KEY(MaKH) REFERENCES KHACHHANG(MaKH);
+ALTER TABLE CHITIETHD ADD CONSTRAINT FK_MaHD_CHITIETHD FOREIGN KEY(MaHD) REFERENCES HOADON(MaHD);
+ALTER TABLE CHITIETHD ADD CONSTRAINT FK_MaH_CHITIETHD FOREIGN KEY(MaH) REFERENCES HANGHOA(MaH);
+
+ALTER TABLE KHACHHANG ADD GioiTinh varchar(10);
+ALTER TABLE KHACHHANG MODIFY GioiTinh varchar(10) AFTER TenKH;
+ALTER TABLE KHACHHANG MODIFY NgaySinh date AFTER GioiTinh;
+ALTER TABLE HOADON MODIFY NgayLapHD date AFTER MaKH;
+
+
+-- 1. Viết câu lệnh thêm cột NgaySinh vào bảng khách hàng.
+ALTER TABLE KHACHHANG ADD NgaySinh date;
+
+-- 2. Cho biết danh sách gồm MaKH, TenKH, NgaySinh, GioiTinh của khách hàng thành viên.
+SELECT MaKH, TenKH, NgaySinh, GioiTinh 
+FROM KHACHHANG k ;
+
+-- 3. Cho biết danh sách gồm MaKH, TenKH, NgaySinh, GioiTinh của khách hàng nữ ở Quy Nhơn 
+SELECT MaKH, TenKH, NgaySinh, GioiTinh 
+FROM KHACHHANG
+WHERE GioiTinh = 'Nữ' AND DiaChi = 'Quy Nhơn';
+
+-- 4. Cho biết danh sách gồm MaKH, TenKH, NgaySinh, GioiTinh của khách hàng VIP ở Quy Nhơn hoặc Tuy Phước.
+SELECT MaKH, TenKH, NgaySinh, GioiTinh 
+FROM KHACHHANG
+WHERE LoaiKH = 'VIP' 
+AND (DiaChi = 'Quy Nhơn' OR DiaChi = 'Tuy Phước');
+
+-- 5. Cho biết số lượng hoá đơn xuất vào tháng 8
+SELECT count(*) AS 'Số hóa đơn trong tháng 8'
+FROM HOADON 
+WHERE MONTH (NgayLapHD) = 8; 
+
+-- 6. Cho biết danh sách các mặt hàng có giá bán từ 20 nghìn đến 50 nghìn.
+SELECT MaH ,TenH, DonGia  
+FROM HANGHOA h 
+WHERE DonGia >= 20000 AND DonGia <= 50000
+
+-- 7. Cho biết MaHD, MaH, SoLuong có số lượng bán > 10.
+SELECT h2.MaHD ,h.MaH, c.SoLuong
+FROM HANGHOA h 
+JOIN CHITIETHD c ON h.MaH = c.MaH 
+JOIN HOADON h2 ON h2.MaHD = c.MaHD 
+WHERE c.SoLuong > 10;
+
+-- 8. Cho biết MaHD, MaH, TenH, DonGia, SoLuong, ThanhTien của hóa đơn 001.
+SELECT h2.MaHD ,h.MaH,h.TenH ,h.DonGia , c.SoLuong ,(h.DonGia * c.SoLuong ) AS 'Thành tiền'
+FROM HANGHOA h 
+JOIN CHITIETHD c ON h.MaH = c.MaH 
+JOIN HOADON h2 ON h2.MaHD = c.MaHD 
+WHERE h2.MaHD ='001';
+
+-- 9. Cho biết MaHD, MaH, TenH, DonGia, SoLuong, ThanhTien có thành tiền từ 1 triệu đến 2 triệu.
+
+SELECT h2.MaHD ,h.MaH,h.TenH ,h.DonGia , c.SoLuong ,(h.DonGia * c.SoLuong ) AS 'Thành Tiền'
+FROM HANGHOA h 
+JOIN CHITIETHD c ON h.MaH = c.MaH 
+JOIN HOADON h2 ON h2.MaHD = c.MaHD 
+WHERE (h.DonGia * c.SoLuong ) >= 1000000 AND (h.DonGia * c.SoLuong ) < 2000000 ;
+
+-- 10. Cho biết thông tin khách hàng không mua hàng vào tháng 6.
+SELECT k.*
+FROM HOADON h  
+JOIN KHACHHANG k ON k.MaKH = h.MaKH 
+WHERE NOT  MONTH(h.NgayLapHD) = 6;
+
+-- 11. Cho biết MaHD, NgayLapHD, MaKH, TenH, DonGia, SoLuong, ThanhTien, bán vào tháng 6.
+SELECT h2.MaHD ,h2.NgayLapHD ,k.MaKH ,h.TenH ,h.DonGia , c.SoLuong ,(h.DonGia * c.SoLuong ) AS 'Thành Tiền'
+FROM HANGHOA h 
+JOIN CHITIETHD c ON h.MaH = c.MaH 
+JOIN HOADON h2 ON h2.MaHD = c.MaHD 
+JOIN KHACHHANG k ON k.MaKH = h2.MaKH 
+WHERE MONTH(h2.NgayLapHD) = 6;
+
+-- 12. Cho biết danh sách các mặt hàng đã bán được.
+SELECT h.MaH ,h.TenH
+FROM CHITIETHD c 
+JOIN HANGHOA h ON c.MaH = h.MaH 
+WHERE NOT c.SoLuong = 0
+GROUP BY h.TenH, h.MaH  ;
+
+-- 13. Cho biết hóa đơn có tổng giá trị nhỏ nhất gồm các thông tin: Số hóa đơn, ngày, tên khách hàng,
+-- địa chỉ khách hàng, tổng giá trị cửa hóa đơn.
+SELECT hd1.MaHD,hd1.NgayLapHD ,k1.TenKH ,k1.DiaChi , MIN(min_amount.total_amount ) AS Tonggiatrihoadon
+FROM (
+    SELECT hd.MaHD, SUM(hh.DonGia * c.SoLuong) total_amount 
+    FROM HANGHOA hh 
+    JOIN CHITIETHD c ON hh.MaH = c.MaH 
+    JOIN HOADON hd ON hd.MaHD = c.MaHD 
+    JOIN KHACHHANG k ON k.MaKH = hd.MaKH
+    GROUP BY hd.MaHD 
+) min_amount
+JOIN HOADON hd1 ON hd1.MaHD = min_amount.MaHD
+JOIN KHACHHANG k1 ON k1.MaKH = hd1.MaKH 
+JOIN CHITIETHD c1 ON c1.MaHD = hd1.MaHD 
+JOIN HANGHOA hh2 ON hh2.MaH = c1.MaH  
+GROUP BY hd1.MaHD
+ORDER BY Tonggiatrihoadon ASC LIMIT 1;
+
+-- 14. Cho biết thông tin của khách hàng có số lượng hóa đơn mua hàng nhiều nhất.
+SELECT k1.* , max_bill.total_bill AS Soluonghoadon
+FROM (
+    SELECT k.MaKH , count(hd.MaHD) total_bill
+    FROM HANGHOA hh 
+    JOIN CHITIETHD c ON hh.MaH = c.MaH 
+    JOIN HOADON hd ON hd.MaHD = c.MaHD 
+    JOIN KHACHHANG k ON k.MaKH = hd.MaKH
+    GROUP BY k.MaKH 
+) max_bill
+JOIN KHACHHANG k1 ON k1.MaKH = max_bill.MaKH
+JOIN HOADON hd1 ON k1.MaKH = hd1.MaKH 
+JOIN CHITIETHD c1 ON c1.MaHD = hd1.MaHD 
+JOIN HANGHOA hh2 ON hh2.MaH = c1.MaH  
+GROUP BY k1.MaKH
+ORDER BY Soluonghoadon DESC LIMIT 1;
+
+-- 15. Cho biết thông tin về các mặt hàng mà được bán trong nhiều hóa đơn nhất.
+SELECT hh2.* , max_count.count_total AS Tongsoluongban
+FROM (
+    SELECT hh.MaH, SUM(c.SoLuong) count_total
+    FROM HANGHOA hh 
+    JOIN CHITIETHD c ON hh.MaH = c.MaH 
+    JOIN HOADON hd ON hd.MaHD = c.MaHD 
+    JOIN KHACHHANG k ON k.MaKH = hd.MaKH
+    GROUP BY hh.MaH
+	) max_count
+JOIN HANGHOA hh2 ON hh2.MaH = max_count.MaH
+JOIN CHITIETHD c1 ON c1.MaH = hh2.MaH
+JOIN HOADON hd1 ON hd1.MaHD = c1.MaHD 
+JOIN KHACHHANG k1 ON k1.MaKH = hd1.MaKH  
+GROUP BY hh2.MaH
+ORDER BY Tongsoluongban DESC LIMIT 1;
